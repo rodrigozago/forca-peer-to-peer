@@ -5,6 +5,8 @@ Jogo distribuido da forca
 Author: Rodrigo Oliveira e Hyago Henrique
 """
 
+#npy
+import npyscreen
 
 import socket
 from _thread import *
@@ -21,6 +23,8 @@ conexoes_jogo_tcp = 4001 #porta para conexao no jogo sobre TCP
 #variaveis de controle
 controle_procurando_jogadores = b'procurando'
 conectar_ao_jogo = b'conectar'
+tipo_jogo = 0
+tipo_jogador = 1
 
 #variaveis compartilhadas
 # -> variaveis de trava
@@ -35,6 +39,43 @@ def get_ip():
     s.connect(('8.8.8.8', 1))  # connect() for UDP doesn't send packets
     local_ip_address = s.getsockname()[0]
     return local_ip_address
+
+
+#interfaces
+class Inicio(npyscreen.Form):
+    def create(self):
+       self.tipo_de_par = self.add(npyscreen.TitleSelectOne, name= "Você deseja: ", values = ["Jogar","Coordenar"], scroll_exit=True)
+    
+    def activate(self):
+        self.edit()
+        if self.tipo_de_par.value[0] == 0:
+            self.parentApp.setNextForm(PROCURANDO_JOGADORES)
+
+
+class ProcurandoJogadores(npyscreen.Form):
+    def create(self):
+        self.texto_procurando_jogadores = self.add(npyscreen.TitleText, name="Procurando jogadores... ",)
+        self.texto_jogadores_conectados = self.add(npyscreen.FixedText, name="Jogadores conectados: \n\tlocalhost:4556 \n\tlocalhost:4984 ",)
+    
+    def activate(self):
+        self.edit()
+        self.parentApp.setNextForm(None)
+
+
+#app
+class Forca(npyscreen.NPSAppManaged):
+   def onStart(self):
+       self.addForm('MAIN', Inicio, name='Forca p2p')
+       self.addForm('PROCURANDO_JOGADORES', ProcurandoJogadores, name="Procurando jogadores")
+       # A real application might define more forms here.......
+       
+
+
+
+    
+
+    
+
 
 
 
@@ -110,14 +151,6 @@ class Jogo:
     def iniciar_jogo(self):
         trava_iniciar_jogo.notify_all()
 
-        
-
-
-
-
-    
-
-
 
 class Jogador:
     #construtor
@@ -161,9 +194,22 @@ class Jogador:
 
 
 
+        
+    
+
+
+
+
+
+
+
 if __name__ == "__main__":
+
+    TestApp = Forca().run()
+
+
     
-    
+    """
     tipo = input("Digite o tipo: C - Coordenador, J - Jogador.")
     if tipo == "C":
         jogo = Jogo("helloWorld","novaDica")
@@ -183,5 +229,6 @@ if __name__ == "__main__":
             trava_aguardar_jogadores = True
         if opcao == 4 and tipo == "J":
             jogador.procurarJogo()
+    """
             
 
