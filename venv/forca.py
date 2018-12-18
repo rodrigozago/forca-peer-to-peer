@@ -147,13 +147,15 @@ class Jogo:
         except:
             print("erro no socket ao conectar ao jogador")
         while True:
+            print("esperando requisições")
             data = client.recv(1024)
             if not data:
                 print("Conexão finalizada.")
                 break
             else:
                 payload = Payload(str = data.decode('ascii'))
-                print(payload)
+                print("RECEBIDO",payload)
+                
     def iniciar_jogo(self):
         evento_iniciar_jogo.set()
 
@@ -192,7 +194,7 @@ class Jogador:
             self.tcp_socket.connect((endereco, conexoes_jogo_tcp))
             print("Conectado!")
             data = self.tcp_socket.recv(1024)
-            print("Iniciando jogo... \nDica inicial: {0}".format(payload.dica))
+            print("Iniciando jogo... \nDica inicial: {0}".format(Payload(str=data.decode('ascii')).dica))
             while True:
                 escolha = input("Escolha uma opção: Letra = 0, Chute = 1")
                 if escolha == "0":
