@@ -94,6 +94,7 @@ class Jogo:
         self.tcp_socket.bind(("", conexoes_jogo_tcp))
 
         self.jogadores = []
+        self.ganhador = ""
         self.evento_procurar_jogadores = threading.Event()
         self.evento_aguardar_jogadores = threading.Event()
         self.evento_fim_do_jogo = threading.Event()
@@ -153,8 +154,22 @@ class Jogo:
                 print("Conexão finalizada.")
                 break
             else:
+                if self.evento_fim_do_jogo.is_set():
+                    ganhador = Payload(ganhador=str(self.ganhador), palavra=self.palavra)
+                    client.send(str(ganhador).encode('ascii'))
+                    #REMOVER DO ARRAY DE JOGADORES
+                    print("JOGO ACABOU")
                 payload = Payload(str = data.decode('ascii'))
-                print("RECEBIDO",payload)
+                #print("entrou no elseeeee")
+                if(payload.chute != "N"):
+                    if payload.chute == self.palavra:
+                        ganhador = Payload(ganhador="1", palavra=self.palavra)
+                        self.ganhador = address
+                        client.send(str(ganhador).encode('ascii'))
+                        self.evento_fim_do_jogo.set()
+                    else:
+                        response = Payload(chute="0")
+                        client.send(str(response).encode('ascii'))
                 
     def iniciar_jogo(self):
         evento_iniciar_jogo.set()
@@ -208,7 +223,17 @@ class Jogador:
                     fpayload = Payload(chute=chute)
                     print("Payload:", fpayload)
                     self.tcp_socket.send(str(fpayload).encode('ascii'))
-                    self.tcp_socket.recv(1024)
+                    data = self.tcp_socket.recv(1024)
+                    recebido = Payload(str=data.decode('ascii'))
+                    if(recebido.ganhador != "N"):
+                        if(recebido.ganhador == "1"):
+                            print("Você acertou a palavra: {0}, finalizando jogo".format(recebido.palavra))
+                            break
+                        else:
+                            print("{0} acertou a palavra, jogo finalizado.".format(recebido.ganhador))
+                            break
+                    elif(recebido.chute == "0"):
+                        print("Você errou o chute.")
                 
             
         except:
@@ -221,7 +246,7 @@ if __name__ == "__main__":
    # global evento_procurar_jogadores
     tipo = input("Digite o tipo: C - Coordenador, J - Jogador.")
     if tipo == "C":
-        jogo = Jogo("helloWorld","novaDica")
+        jogo = Jogo("casa","novaDica")
         print("Novo jogo criado...")
         tempo = int(input("Digite por quanto tempo aguardar jogadores (segundos): "))
         print("Aguardando jogadores...")
